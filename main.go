@@ -25,16 +25,19 @@ func main() {
 		cli.StringFlag{
 			Name:  "source, s",
 			Value: "./proxy.db",
+			EnvVar: "DB_SOURCE",
 			Usage: "database source",
 		},
 		cli.StringFlag{
 			Name:  "dialect, d",
 			Value: "sqlite3",
+			EnvVar: "DB_DIALECT",
 			Usage: "database dialect",
 		},
 		cli.StringFlag{
 			Name:  "addr, a",
 			Value: "0.0.0.0:4433",
+			EnvVar: "ADDR",
 			Usage: "service listener address",
 		},
 	}
