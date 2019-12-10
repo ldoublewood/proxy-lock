@@ -1,0 +1,7 @@
+addr: :9000
+#dialect: "mysql"
+#dsn: "root:@tcp(127.0.0.1:3306)/admin?charset=utf8&parseTime=True&loc=Local"
+dialect: "sqlite3"
+dsn: "~/.proxylock/proxys.db"
+#dsn: "./proxys.db"
+max_idle_conn: 100
