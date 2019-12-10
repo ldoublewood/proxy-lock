@@ -16,6 +16,6 @@ RUN cd src && go build -o ../proxylock main.go && cd ..
 
 RUN rm -rf src
 
-EXPOSE 3344
+EXPOSE 4433
 
 CMD ["/workdir/proxylock"]
