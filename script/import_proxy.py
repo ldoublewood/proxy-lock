@@ -23,18 +23,19 @@ def post( hostport, url, data ):
 
 def import_proxy(hostport,recordfile,tag):
     data = {}
-    with open(namefile, 'r') as csvfile:
+    with open(recordfile, 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=':')
         records = []
         first = True
         for row in reader:
             host = row[0]
+            port = int(row[1])
             record = {}
             record['host'] = host
             record['port'] = port
             records.append(record)
         data["proxies"] = records
-        data["tag"] = tag        
+        data["tag"] = tag
         rsp = post(hostport, "/api/v1/proxies", data)
         print(rsp)
    
@@ -51,11 +52,11 @@ def main(argv):
          sys.exit()
       elif opt in ("-i", "--ifile"):
          inputfile = arg
-      elif opt in ("-t", "--tag"):
-         tag = arg
       elif opt in ("-u", "--url"):
          url = arg
-   import_proxy(url, inputfile)
+      elif opt in ("-t", "--tag"):
+         tag = arg
+   import_proxy(url, inputfile, tag)
 
 if __name__ == "__main__":
    main(sys.argv[1:])

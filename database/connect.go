@@ -15,6 +15,7 @@ func InitDB() (*gorm.DB, error) {
 	db, err := gorm.Open(conf.Dialect, conf.DSN)
 
 	if err == nil {
+		db.LogMode(true)
 		db.DB().SetMaxIdleConns(conf.MaxIdleConn)
 		DB = db
 		db.AutoMigrate(&models.Proxy{})

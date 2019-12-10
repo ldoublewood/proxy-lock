@@ -4,8 +4,8 @@ import "time"
 
 type Proxy struct {
 	Model
-	Host 		    string	`gorm:"type:varchar(15);unique_index:hostport" json:"host"`
-	Port            int		`gorm:"type:int;not null;unique_index:hostport" json:"port"`
+	Host 		    string	`gorm:"type:varchar(15)" json:"host"`
+	Port            int		`gorm:"type:int;not null" json:"port"`
 	Protocol        string	`gorm:"type:varchar(5);not null;default:'https'" json:"protocol,omitempty"`
 	Owner           string	`gorm:"type:varchar(20);not null;" json:"owner,omitempty"`
 	Status          string	`gorm:"type:varchar(10);not null;default:'free'" json:"status,omitempty"`
