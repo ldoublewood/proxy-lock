@@ -40,25 +40,20 @@ func main() {
 			EnvVar: "ADDR",
 			Usage: "service listener address",
 		},
+		cli.StringFlag{
+			Name:  "testdesturl",
+			Value: "",
+			EnvVar: "TEST_DEST_URL",
+			Usage: "test dest url address, e.g. https://www.baidu.com, no test if it is empty",
+		},
 	}
-	//app.Commands = []cli.Command{
-	//	{
-	//		Name:    "run",
-	//		Aliases: []string{"r"},
-	//		Usage:   "run",
-	//		Action: func(c *cli.Context) error {
-	//			fmt.Println("1 + 1 = ", 1+1)
-	//			return nil
-	//		},
-	//	},
-	//}
 
 	app.Action = func(c *cli.Context) error {
 		var db *gorm.DB
 		var err error
 		fmt.Println("starting")
 
-		config.Init(c.String("dialect"), c.String("source"), c.String("addr"))
+		config.Init(c)
 		if db, err = database.InitDB(); err != nil {
 			fmt.Println("err open databases")
 			return err

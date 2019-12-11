@@ -1,15 +1,16 @@
 package controllers
 
 import (
+	"fmt"
+	"gin-gorm-example/config"
 	"gin-gorm-example/database"
 	"gin-gorm-example/models"
 	"github.com/gin-gonic/gin"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
-)
-const (
-
 )
 
 const (
@@ -81,8 +82,75 @@ func scanExpiredRecord(now time.Time) (errcode int, err error) {
 
 }
 
+func getTestedProxy(owner string, destUrl string) (errcode int, err error, outproxy *models.Proxy) {
+	var proxy models.Proxy
+	for {
+		if err = database.DB.Where(&models.Proxy{
+			Status: "free",
+		}).Take(&proxy).Error; err != nil {
+			log.Printf("no avaiable proxy!! please contact admin")
+			return http.StatusNotFound, err, nil
+		}
+
+		proxy.Status = "locked"
+		proxy.Owner = owner
+
+		if err = database.DB.Model(&models.Proxy{}).Update(&proxy).Error; err != nil {
+			log.Printf("lock the record fail!! please contact admin")
+			return http.StatusNotFound, err, nil
+		}
+
+		if errcode, err = doTest(destUrl, &proxy); err != nil {
+			log.Printf("test request fail, so mask the record and try next record: %s", err.Error())
+			proxy.Status = "masked"
+			proxy.Owner = owner
+			if err = database.DB.Model(&models.Proxy{}).Update(&proxy).Error; err != nil {
+				log.Printf("mask the record fail")
+				return http.StatusNotFound, err, nil
+			}
+			continue
+		}
+		log.Printf("found tested proxy: %s:%d", proxy.Host, proxy.Port)
+		break
+	}
+
+
+	return http.StatusOK, nil, &proxy
+
+}
+
+func doTest(destUrl string, proxy *models.Proxy) (errcode int, err error) {
+	// return OK if destUrl is empty
+	if destUrl == "" {
+		return http.StatusOK, nil
+	}
+	urli := url.URL{}
+	strProxy := fmt.Sprintf("http://%s:%d", proxy.Host, proxy.Port)
+	urlproxy, _ := urli.Parse(strProxy)
+	client := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyURL(urlproxy),
+		},
+	}
+	var req *http.Request
+	req, err = http.NewRequest("GET", destUrl, nil)
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+	var response *http.Response
+	response, err = client.Do(req)
+	defer response.Body.Close()
+	_, err = ioutil.ReadAll(response.Body)
+	if err != nil {
+		return http.StatusServiceUnavailable, err
+	}
+
+	//ignore the response because this is only test
+	return http.StatusOK, nil
+}
 func (a *ProxyController) doLock(c *gin.Context) (errcode int, err error, outproxy *models.Proxy) {
 	var request TakeRequest
+
 	if err = c.ShouldBind(&request); err != nil {
 		return http.StatusBadRequest, err, nil
 	}
@@ -90,21 +158,7 @@ func (a *ProxyController) doLock(c *gin.Context) (errcode int, err error, outpro
 	if errcode, err = scanExpiredRecord(now); err != nil {
 		return
 	}
-	var proxy models.Proxy
-	if err := database.DB.Where(&models.Proxy{
-		Status:         "free",
-	}).Take(&proxy).Error; err != nil {
-		log.Printf("no avaiable proxy!! please contact admin")
-		return http.StatusNotFound, err, nil
-	}
-	proxy.Status = "locked"
-	proxy.Owner = request.Owner
-
-	if err = database.DB.Model(&models.Proxy{}).Update(&proxy).Error; err != nil {
-		log.Printf("lock the record fail!! please contact admin")
-		return http.StatusNotFound, err, nil
-	}
-	return http.StatusOK, nil, &proxy
+	return getTestedProxy(request.Owner, config.Get().TestDestUrl)
 }
 
 

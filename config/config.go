@@ -1,19 +1,23 @@
 package config
 
+import "gopkg.in/urfave/cli.v1"
+
 type Config struct {
-	Addr 			string		`yaml:"addr"`
-	Dialect 		string		`yaml:"dialect"`
-	DSN				string		`yaml:"dsn"`
-	MaxIdleConn		int			`yaml:"max_idle_conn"`
+	Addr 			string
+	Dialect 		string
+	DSN				string
+	MaxIdleConn		int
+	TestDestUrl		string
 }
 
 var config *Config
 
-func Init(dialect string, source string, addr string) {
+func Init(c *cli.Context) {
 	config = &Config{
-		Addr: addr,
-		Dialect:     dialect,
-		DSN:         source,
+		Addr: c.String("addr"),
+		Dialect:     c.String("dialect"),
+		DSN:         c.String("source"),
+		TestDestUrl: c.String("testdesturl"),
 		MaxIdleConn: 100,
 	}
 }
